@@ -961,6 +961,11 @@ def like_photo(photo_id):
 
 # Create a new blueprint for Face of HESA
 foh = Blueprint('foh', __name__, url_prefix='/face-of-hesa')
+hesa_dinner = Blueprint('hesa_dinner', __name__, url_prefix='/hesa-dinner')
+
+@hesa_dinner.route('/')
+def index():
+    return render_template('hesa_dinner.html')
 
 # Global voting settings
 class VotingSettings:
