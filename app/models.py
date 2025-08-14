@@ -194,3 +194,47 @@ class FohVote(db.Model):
     
     # Relationship
     contestant = db.relationship('FohContestant', backref='votes_received')
+    
+    
+# Add these new models to your models.py file
+
+class AwardsCategory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    nominees = db.relationship('AwardsNominee', backref='category_ref', lazy=True, cascade="all, delete-orphan")
+    
+    def __repr__(self):
+        return f"AwardsCategory('{self.name}')"
+
+class AwardsNominee(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=True)  # Optional description
+    votes = db.Column(db.Integer, default=0)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Foreign key
+    category_id = db.Column(db.Integer, db.ForeignKey('awards_category.id'), nullable=False)
+    
+    # Relationships
+    votes_received = db.relationship('AwardsVote', backref='nominee_ref', lazy=True, cascade="all, delete-orphan")
+    
+    def __repr__(self):
+        return f"AwardsNominee('{self.name}', category='{self.category_ref.name}')"
+
+class AwardsVote(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nominee_id = db.Column(db.Integer, db.ForeignKey('awards_nominee.id'), nullable=False)
+    email = db.Column(db.String(120), nullable=True)  # Optional voter email
+    votes_count = db.Column(db.Integer, default=1)
+    amount = db.Column(db.Float, nullable=False)  # Amount paid in GHS
+    transaction_ref = db.Column(db.String(255), nullable=False)  # Paystack reference
+    verified = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+

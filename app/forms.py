@@ -132,3 +132,23 @@ class VoteForm(FlaskForm):
     votes = IntegerField('Number of Votes', validators=[DataRequired(), NumberRange(min=1)])
     email = StringField('Email (Optional)', validators=[Optional(), Email()])
     submit = SubmitField('Proceed to Payment')
+    
+# Add these new forms to your forms.py file
+
+class AwardsCategoryForm(FlaskForm):
+    name = StringField('Category Name', validators=[DataRequired(), Length(min=2, max=100)])
+    description = TextAreaField('Description', validators=[Optional()])
+    is_active = BooleanField('Active', default=True)
+    submit = SubmitField('Submit')
+
+class AwardsNomineeForm(FlaskForm):
+    name = StringField('Nominee Name', validators=[DataRequired(), Length(min=2, max=100)])
+    description = TextAreaField('Description (Optional)', validators=[Optional()])
+    category = SelectField('Category', coerce=int, validators=[DataRequired()])
+    is_active = BooleanField('Active', default=True)
+    submit = SubmitField('Submit')
+
+class AwardsVoteForm(FlaskForm):
+    votes = IntegerField('Number of Votes', validators=[DataRequired(), NumberRange(min=1)])
+    email = StringField('Email (Optional)', validators=[Optional(), Email()])
+    submit = SubmitField('Proceed to Payment')

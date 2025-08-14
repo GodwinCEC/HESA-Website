@@ -6,6 +6,8 @@ from app.models import (User, BlogPost, Comment, PersonalityOfTheWeek,
 from app.forms import (AssignBusForm, RegistrationForm, LoginForm, BlogPostForm, CommentForm, 
                       PotwForm, PotwCommentForm, EventForm, BusLocationForm, HomeBannerForm, GalleryCategoryForm, 
                       GalleryPhotoForm, FohContestantForm, VoteForm)
+from app.models import AwardsCategory, AwardsNominee, AwardsVote
+from app.forms import AwardsCategoryForm, AwardsNomineeForm, AwardsVoteForm
 import os
 import secrets
 from PIL import Image
@@ -18,6 +20,13 @@ auth = Blueprint('auth', __name__, url_prefix='/auth')
 blog = Blueprint('blog', __name__, url_prefix='/blog')
 editor = Blueprint('editor', __name__, url_prefix='/editor')
 
+
+# Global awards voting settings class (add this after the VotingSettings class)
+class AwardsVotingSettings:
+    is_voting_active = True
+    vote_cost = 1.0  # Cost per vote in GHS
+    show_vote_counts = False  # Whether to show vote counts on public pages
+    
 # Helper functions
 def save_image(form_image, folder='uploads'):
     """
@@ -1184,3 +1193,295 @@ def update_vote_cost():
         flash('Invalid vote cost. Please enter a positive number.', 'danger')
     
     return redirect(url_for('editor.manage_foh'))
+
+
+# Create a new blueprint for awards
+awards = Blueprint('awards', __name__, url_prefix='/awards')
+
+# Public routes for Awards
+@awards.route('/')
+def index():
+    categories = AwardsCategory.query.filter_by(is_active=True).order_by(AwardsCategory.name).all()
+    voting_active = AwardsVotingSettings.is_voting_active
+    vote_cost = AwardsVotingSettings.vote_cost
+    show_vote_counts = AwardsVotingSettings.show_vote_counts
+    return render_template('awards.html', 
+                          categories=categories, 
+                          voting_active=voting_active, 
+                          vote_cost=vote_cost,
+                          show_vote_counts=show_vote_counts)
+
+@awards.route('/category/<int:category_id>')
+def category_nominees(category_id):
+    category = AwardsCategory.query.get_or_404(category_id)
+    nominees = AwardsNominee.query.filter_by(category_id=category_id, is_active=True).order_by(AwardsNominee.name).all()
+    voting_active = AwardsVotingSettings.is_voting_active
+    vote_cost = AwardsVotingSettings.vote_cost
+    show_vote_counts = AwardsVotingSettings.show_vote_counts
+    return render_template('category_nominees.html', 
+                          category=category, 
+                          nominees=nominees, 
+                          voting_active=voting_active, 
+                          vote_cost=vote_cost,
+                          show_vote_counts=show_vote_counts)
+
+@awards.route('/vote/<int:nominee_id>', methods=['POST'])
+def process_vote(nominee_id):
+    if not AwardsVotingSettings.is_voting_active:
+        flash('Voting is currently closed.', 'warning')
+        return redirect(url_for('awards.index'))
+    
+    nominee = AwardsNominee.query.get_or_404(nominee_id)
+    
+    # Get votes from form data
+    votes = int(request.form.get('votes', 1))
+    email = request.form.get('email', '')
+    
+    # Calculate amount
+    amount = votes * AwardsVotingSettings.vote_cost
+    
+    # Generate a unique reference
+    reference = f"awards-{nominee_id}-{secrets.token_hex(6)}"
+    
+    # Store pending vote
+    vote = AwardsVote(
+        nominee_id=nominee_id,
+        email=email,
+        votes_count=votes,
+        amount=amount,
+        transaction_ref=reference,
+        verified=False
+    )
+    db.session.add(vote)
+    db.session.commit()
+    
+    # Redirect to payment gateway
+    return redirect(url_for('awards.initiate_payment', reference=reference))
+
+@awards.route('/payment/<reference>')
+def initiate_payment(reference):
+    vote = AwardsVote.query.filter_by(transaction_ref=reference).first_or_404()
+    nominee = AwardsNominee.query.get_or_404(vote.nominee_id)
+    
+    # Calculate amount in kobo (multiply by 100) for Paystack
+    amount_kobo = int(vote.amount * 100)
+    
+    return render_template('awards_payment.html', 
+                          vote=vote, 
+                          nominee=nominee, 
+                          amount_kobo=amount_kobo,
+                          reference=reference)
+
+@awards.route('/verify/<reference>')
+def verify_payment(reference):
+    vote = AwardsVote.query.filter_by(transaction_ref=reference).first_or_404()
+    
+    # Mark vote as verified
+    vote.verified = True
+    
+    # Update nominee vote count
+    nominee = AwardsNominee.query.get(vote.nominee_id)
+    nominee.votes += vote.votes_count
+    
+    db.session.commit()
+    
+    flash(f'Thank you! Your {vote.votes_count} vote(s) for {nominee.name} has been recorded.', 'success')
+    return redirect(url_for('awards.category_nominees', category_id=nominee.category_id))
+
+# Admin routes for Awards management
+@editor.route('/awards/manage')
+@login_required
+def manage_awards():
+    if current_user.role not in ['admin', 'editor']:
+        abort(403)
+    
+    categories = AwardsCategory.query.order_by(AwardsCategory.created_at.desc()).all()
+    nominees = AwardsNominee.query.order_by(AwardsNominee.created_at.desc()).all()
+    
+    category_form = AwardsCategoryForm()
+    nominee_form = AwardsNomineeForm()
+    nominee_form.category.choices = [(c.id, c.name) for c in AwardsCategory.query.filter_by(is_active=True).all()]
+    
+    return render_template('manage_awards.html', 
+                          categories=categories,
+                          nominees=nominees,
+                          category_form=category_form, 
+                          nominee_form=nominee_form,
+                          voting_active=AwardsVotingSettings.is_voting_active,
+                          vote_cost=AwardsVotingSettings.vote_cost,
+                          show_vote_counts=AwardsVotingSettings.show_vote_counts)
+
+@editor.route('/awards/add_category', methods=['POST'])
+@login_required
+def add_awards_category():
+    if current_user.role not in ['admin', 'editor']:
+        abort(403)
+    
+    form = AwardsCategoryForm()
+    if form.validate_on_submit():
+        category = AwardsCategory(
+            name=form.name.data,
+            description=form.description.data,
+            is_active=form.is_active.data
+        )
+        db.session.add(category)
+        db.session.commit()
+        flash('Category added successfully!', 'success')
+    else:
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f"Error in {getattr(form, field).label.text}: {error}", 'danger')
+    
+    return redirect(url_for('editor.manage_awards'))
+
+@editor.route('/awards/add_nominee', methods=['POST'])
+@login_required
+def add_awards_nominee():
+    if current_user.role not in ['admin', 'editor']:
+        abort(403)
+    
+    form = AwardsNomineeForm()
+    form.category.choices = [(c.id, c.name) for c in AwardsCategory.query.filter_by(is_active=True).all()]
+    
+    if form.validate_on_submit():
+        nominee = AwardsNominee(
+            name=form.name.data,
+            description=form.description.data,
+            category_id=form.category.data,
+            is_active=form.is_active.data
+        )
+        db.session.add(nominee)
+        db.session.commit()
+        flash('Nominee added successfully!', 'success')
+    else:
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f"Error in {getattr(form, field).label.text}: {error}", 'danger')
+    
+    return redirect(url_for('editor.manage_awards'))
+
+@editor.route('/awards/edit_category/<int:category_id>', methods=['GET', 'POST'])
+@login_required
+def edit_awards_category(category_id):
+    if current_user.role not in ['admin', 'editor']:
+        abort(403)
+    
+    category = AwardsCategory.query.get_or_404(category_id)
+    form = AwardsCategoryForm()
+    
+    if form.validate_on_submit():
+        category.name = form.name.data
+        category.description = form.description.data
+        category.is_active = form.is_active.data
+        db.session.commit()
+        flash('Category updated successfully!', 'success')
+        return redirect(url_for('editor.manage_awards'))
+    
+    elif request.method == 'GET':
+        form.name.data = category.name
+        form.description.data = category.description
+        form.is_active.data = category.is_active
+    
+    return render_template('edit_awards_category.html', form=form, category=category)
+
+@editor.route('/awards/edit_nominee/<int:nominee_id>', methods=['GET', 'POST'])
+@login_required
+def edit_awards_nominee(nominee_id):
+    if current_user.role not in ['admin', 'editor']:
+        abort(403)
+    
+    nominee = AwardsNominee.query.get_or_404(nominee_id)
+    form = AwardsNomineeForm()
+    form.category.choices = [(c.id, c.name) for c in AwardsCategory.query.filter_by(is_active=True).all()]
+    
+    if form.validate_on_submit():
+        nominee.name = form.name.data
+        nominee.description = form.description.data
+        nominee.category_id = form.category.data
+        nominee.is_active = form.is_active.data
+        db.session.commit()
+        flash('Nominee updated successfully!', 'success')
+        return redirect(url_for('editor.manage_awards'))
+    
+    elif request.method == 'GET':
+        form.name.data = nominee.name
+        form.description.data = nominee.description
+        form.category.data = nominee.category_id
+        form.is_active.data = nominee.is_active
+    
+    return render_template('edit_awards_nominee.html', form=form, nominee=nominee)
+
+@editor.route('/awards/delete_category/<int:category_id>', methods=['POST'])
+@login_required
+def delete_awards_category(category_id):
+    if current_user.role not in ['admin', 'editor']:
+        abort(403)
+    
+    category = AwardsCategory.query.get_or_404(category_id)
+    
+    # Delete all nominees and votes in this category
+    for nominee in category.nominees:
+        AwardsVote.query.filter_by(nominee_id=nominee.id).delete()
+    
+    db.session.delete(category)
+    db.session.commit()
+    
+    flash('Category and all its nominees deleted successfully!', 'success')
+    return redirect(url_for('editor.manage_awards'))
+
+@editor.route('/awards/delete_nominee/<int:nominee_id>', methods=['POST'])
+@login_required
+def delete_awards_nominee(nominee_id):
+    if current_user.role not in ['admin', 'editor']:
+        abort(403)
+    
+    nominee = AwardsNominee.query.get_or_404(nominee_id)
+    
+    # Delete all votes for this nominee
+    AwardsVote.query.filter_by(nominee_id=nominee.id).delete()
+    
+    db.session.delete(nominee)
+    db.session.commit()
+    
+    flash('Nominee deleted successfully!', 'success')
+    return redirect(url_for('editor.manage_awards'))
+
+@editor.route('/awards/toggle_voting', methods=['POST'])
+@login_required
+def toggle_awards_voting():
+    if current_user.role not in ['admin', 'editor']:
+        abort(403)
+    
+    AwardsVotingSettings.is_voting_active = not AwardsVotingSettings.is_voting_active
+    status = "enabled" if AwardsVotingSettings.is_voting_active else "disabled"
+    flash(f'Awards voting has been {status}!', 'success')
+    return redirect(url_for('editor.manage_awards'))
+
+@editor.route('/awards/update_vote_cost', methods=['POST'])
+@login_required
+def update_awards_vote_cost():
+    if current_user.role not in ['admin', 'editor']:
+        abort(403)
+    
+    try:
+        new_cost = float(request.form.get('vote_cost', 1.0))
+        if new_cost <= 0:
+            raise ValueError("Cost must be positive")
+        
+        AwardsVotingSettings.vote_cost = new_cost
+        flash(f'Awards vote cost updated to GHS {new_cost:.2f}!', 'success')
+    except ValueError:
+        flash('Invalid vote cost. Please enter a positive number.', 'danger')
+    
+    return redirect(url_for('editor.manage_awards'))
+
+@editor.route('/awards/toggle_vote_display', methods=['POST'])
+@login_required
+def toggle_awards_vote_display():
+    if current_user.role not in ['admin', 'editor']:
+        abort(403)
+    
+    AwardsVotingSettings.show_vote_counts = not AwardsVotingSettings.show_vote_counts
+    status = "shown" if AwardsVotingSettings.show_vote_counts else "hidden"
+    flash(f'Vote counts will now be {status} on public pages!', 'success')
+    return redirect(url_for('editor.manage_awards'))

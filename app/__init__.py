@@ -32,7 +32,7 @@ def create_app(config_class=Config):
         return {'now': datetime.utcnow()}
     
     # Import and register blueprints
-    from app.routes import main, auth, blog, editor, gallery, foh, hesa_dinner
+    from app.routes import main, auth, blog, editor, gallery, foh, hesa_dinner, awards
     from app.driver_routes import driver  # Import the new driver blueprint
     
     app.register_blueprint(main)
@@ -43,6 +43,7 @@ def create_app(config_class=Config):
     app.register_blueprint(gallery)
     app.register_blueprint(foh)
     app.register_blueprint(hesa_dinner)
+    app.register_blueprint(awards)
 
     
     # Create database tables if they don't exist

@@ -1,0 +1,498 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ category.name }} - HESA Awards{% endblock %}
+
+{% block styles %}
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Georgia', serif;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        color: #ffffff;
+        overflow-x: hidden;
+        min-height: 100vh;
+    }
+
+    .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+
+    /* Header Section */
+    .category-header {
+        padding: 120px 0 60px;
+        text-align: center;
+        position: relative;
+        background: radial-gradient(ellipse at center, rgba(255,215,0,0.1) 0%, transparent 70%);
+    }
+
+    .back-button {
+        position: absolute;
+        top: 100px;
+        left: 20px;
+        background: rgba(255,255,255,0.1);
+        color: #ffd700;
+        border: 1px solid #ffd700;
+        padding: 10px 20px;
+        border-radius: 25px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        font-weight: bold;
+    }
+
+    .back-button:hover {
+        background: #ffd700;
+        color: #1a1a2e;
+        text-decoration: none;
+    }
+
+    .category-title {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        background: linear-gradient(45deg, #ffd700, #ffffff, #ffd700);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: glow 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes glow {
+        from { filter: brightness(1); }
+        to { filter: brightness(1.2); }
+    }
+
+    .category-description {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 20px;
+    }
+
+    .voting-info {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+
+    .voting-status {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+
+    .voting-active {
+        background-color: rgba(40, 167, 69, 0.2);
+        color: #28a745;
+        border: 1px solid #28a745;
+    }
+
+    .voting-inactive {
+        background-color: rgba(220, 53, 69, 0.2);
+        color: #dc3545;
+        border: 1px solid #dc3545;
+    }
+
+    .vote-cost {
+        color: #ffd700;
+        font-weight: bold;
+    }
+
+    /* Nominees Section */
+    .nominees-section {
+        padding: 40px 0 80px;
+    }
+
+    .nominees-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 25px;
+        margin-top: 40px;
+    }
+
+    .nominee-card {
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 30px;
+        text-align: center;
+        border: 1px solid rgba(255,215,0,0.2);
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .nominee-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(255,215,0,0.2);
+        border-color: #ffd700;
+    }
+
+    .nominee-name {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #ffd700;
+        margin-bottom: 15px;
+    }
+
+    .nominee-description {
+        font-size: 1rem;
+        opacity: 0.9;
+        line-height: 1.6;
+        margin-bottom: 20px;
+        min-height: 50px;
+    }
+
+    .nominee-votes {
+        font-size: 0.9rem;
+        color: #ffd700;
+        margin-bottom: 20px;
+        font-weight: bold;
+    }
+
+    .vote-button {
+        background: linear-gradient(45deg, #ffd700, #ffed4e);
+        color: #1a1a2e;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 25px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 1rem;
+    }
+
+    .vote-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(255,215,0,0.3);
+        color: #1a1a2e;
+        text-decoration: none;
+    }
+
+    .vote-button:disabled {
+        background: #666;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    /* Vote Modal */
+    .vote-modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.7);
+        backdrop-filter: blur(5px);
+    }
+
+    .vote-modal-content {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        margin: 10% auto;
+        padding: 40px;
+        border-radius: 20px;
+        width: 90%;
+        max-width: 500px;
+        border: 1px solid #ffd700;
+        position: relative;
+    }
+
+    .close-modal {
+        position: absolute;
+        right: 20px;
+        top: 20px;
+        font-size: 1.5rem;
+        color: #ffd700;
+        cursor: pointer;
+    }
+
+    .modal-nominee-name {
+        font-size: 1.8rem;
+        color: #ffd700;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .vote-form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .form-group label {
+        color: #ffd700;
+        font-weight: bold;
+    }
+
+    .form-group input {
+        padding: 12px;
+        border: 1px solid rgba(255,215,0,0.3);
+        border-radius: 8px;
+        background: rgba(255,255,255,0.1);
+        color: #fff;
+        font-size: 1rem;
+    }
+
+    .form-group input:focus {
+        outline: none;
+        border-color: #ffd700;
+        box-shadow: 0 0 10px rgba(255,215,0,0.3);
+    }
+
+    .vote-cost-display {
+        text-align: center;
+        font-size: 1.2rem;
+        color: #ffd700;
+        font-weight: bold;
+        margin: 10px 0;
+    }
+
+    .submit-vote-btn {
+        background: linear-gradient(45deg, #ffd700, #ffed4e);
+        color: #1a1a2e;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 25px;
+        font-weight: bold;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .submit-vote-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(255,215,0,0.4);
+    }
+
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        color: #ffd700;
+        opacity: 0.5;
+        margin-bottom: 20px;
+    }
+
+    .empty-state h3 {
+        color: #ffd700;
+        margin-bottom: 10px;
+    }
+
+    .empty-state p {
+        opacity: 0.7;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .category-title {
+            font-size: 2.2rem;
+        }
+        
+        .back-button {
+            position: relative;
+            top: 0;
+            left: 0;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+        
+        .voting-info {
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .nominees-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        
+        .vote-modal-content {
+            margin: 5% auto;
+            padding: 30px 20px;
+            width: 95%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Category Header -->
+<section class="category-header">
+    <div class="container">
+        <a href="{{ url_for('awards.index') }}" class="back-button">
+            <i class="fas fa-arrow-left"></i> Back to Categories
+        </a>
+        
+        <h1 class="category-title">{{ category.name }}</h1>
+        {% if category.description %}
+        <p class="category-description">{{ category.description }}</p>
+        {% endif %}
+        
+        <div class="voting-info">
+            {% if voting_active %}
+            <div class="voting-status voting-active">
+                <i class="fas fa-check-circle"></i> Voting Open
+            </div>
+            {% else %}
+            <div class="voting-status voting-inactive">
+                <i class="fas fa-times-circle"></i> Voting Closed
+            </div>
+            {% endif %}
+            
+            <div class="vote-cost">
+                <i class="fas fa-coins"></i> GH₵ {{ "%.2f"|format(vote_cost) }} per vote
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Nominees Section -->
+<section class="nominees-section">
+    <div class="container">
+        {% if nominees %}
+        <div class="nominees-grid">
+            {% for nominee in nominees %}
+            <div class="nominee-card">
+                <div class="nominee-name">{{ nominee.name }}</div>
+                {% if nominee.description %}
+                <div class="nominee-description">{{ nominee.description }}</div>
+                {% endif %}
+                
+                {% if show_vote_counts %}
+                <div class="nominee-votes">
+                    <i class="fas fa-vote-yea"></i> {{ nominee.votes }} votes
+                </div>
+                {% endif %}
+                
+                {% if voting_active %}
+                <button class="vote-button" onclick="openVoteModal({{ nominee.id }}, '{{ nominee.name }}')">
+                    <i class="fas fa-vote-yea"></i> Vote Now
+                </button>
+                {% else %}
+                <button class="vote-button" disabled>
+                    <i class="fas fa-ban"></i> Voting Closed
+                </button>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-users"></i>
+            <h3>No Nominees Yet</h3>
+            <p>Nominees for this category will be announced soon. Check back later!</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Vote Modal -->
+<div id="voteModal" class="vote-modal">
+    <div class="vote-modal-content">
+        <span class="close-modal" onclick="closeVoteModal()">&times;</span>
+        <div class="modal-nominee-name" id="modalNomineeName"></div>
+        
+        <form class="vote-form" id="voteForm" method="POST">
+            <div class="form-group">
+                <label for="votes">Number of Votes:</label>
+                <input type="number" id="votes" name="votes" min="1" value="1" required onchange="updateCost()">
+            </div>
+            
+            <div class="vote-cost-display" id="costDisplay">
+                Total Cost: GH₵ {{ "%.2f"|format(vote_cost) }}
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email (Optional):</label>
+                <input type="email" id="email" name="email" placeholder="your.email@example.com">
+            </div>
+            
+            <button type="submit" class="submit-vote-btn">
+                <i class="fas fa-credit-card"></i> Proceed to Payment
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentNomineeId = null;
+const voteCost = {{ vote_cost }};
+
+function openVoteModal(nomineeId, nomineeName) {
+    currentNomineeId = nomineeId;
+    document.getElementById('modalNomineeName').textContent = nomineeName;
+    document.getElementById('voteModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    
+    // Update form action
+    const form = document.getElementById('voteForm');
+    form.action = "{{ url_for('awards.process_vote', nominee_id=0) }}".replace('0', nomineeId);
+}
+
+function closeVoteModal() {
+    document.getElementById('voteModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+    currentNomineeId = null;
+}
+
+function updateCost() {
+    const votes = document.getElementById('votes').value || 1;
+    const totalCost = (votes * voteCost).toFixed(2);
+    document.getElementById('costDisplay').textContent = `Total Cost: GH₵ ${totalCost}`;
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('voteModal');
+    if (event.target === modal) {
+        closeVoteModal();
+    }
+}
+
+// Close modal on escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeVoteModal();
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Add hover animations to nominee cards
+    const nomineeCards = document.querySelectorAll('.nominee-card');
+    
+    nomineeCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px) scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+});
+</script>
+{% endblock %}
