@@ -415,6 +415,7 @@
         <div class="modal-nominee-name" id="modalNomineeName"></div>
         
         <form class="vote-form" id="voteForm" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
                 <label for="votes">Number of Votes:</label>
                 <input type="number" id="votes" name="votes" min="1" value="1" required onchange="updateCost()">
