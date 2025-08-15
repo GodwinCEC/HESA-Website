@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function paymentHandler(email) {
         // Configure Paystack
         const handler = PaystackPop.setup({
-            key: 'pk_test_3a37a65c4859a8ddafc2b22501d5e842ebae7c11', // Replace with your Paystack public key
+            key: 'pk_live_11e274d83b872eaa459e4ebdbcb941e11d392137', // Replace with your Paystack public key
             email: email,
             amount: {{ amount_kobo }}, // Amount in kobo
             currency: 'GHS',
