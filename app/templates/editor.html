@@ -56,6 +56,12 @@
                         class="action-btn">
                         <i class="fas fa-trophy"></i> Manage Awards
                     </a>
+                    {% if current_user.username in ['Godwin', 'gymncec'] %}
+                    <a href="{{ url_for('editor.awards_analytics') }}"
+                        class="action-btn">
+                        <i class="fas fa-chart-line"></i> Awards Analytics
+                    </a>
+                    {% endif %}
                     {% endif %}
                 </div>
             </div>
