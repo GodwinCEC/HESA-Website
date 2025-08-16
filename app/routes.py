@@ -1226,6 +1226,8 @@ def category_nominees(category_id):
                           show_vote_counts=show_vote_counts)
 # Add these debug print statements to your awards routes
 
+# Add these debug print statements to your awards routes
+
 @awards.route('/vote/<int:nominee_id>', methods=['POST'])
 def process_vote(nominee_id):
     if not AwardsVotingSettings.is_voting_active:
@@ -1309,7 +1311,7 @@ def initiate_payment(reference):
     print(f"Amount in kobo: {amount_kobo}")
     
     # Check what email will be used in template
-    payment_email = vote.email if vote.email else "voter@example.com"
+    payment_email = vote.email if (vote.email and vote.email.strip()) else "noreply@hesa.knust.edu.gh"
     print(f"Payment email to use: '{payment_email}'")
     print("=== END PAYMENT DEBUG ===")
     
@@ -1332,10 +1334,17 @@ def verify_payment(reference):
     print(f"  - votes_count: {vote.votes_count}")
     print(f"  - verified: {vote.verified}")
     
+    # Check if already verified to avoid double counting
+    if vote.verified:
+        print("Vote already verified - no changes made")
+        flash('This vote has already been verified.', 'info')
+        nominee = AwardsNominee.query.get(vote.nominee_id)
+        return redirect(url_for('awards.category_nominees', category_id=nominee.category_id))
+    
     # Mark vote as verified
     vote.verified = True
     
-    # Update nominee vote count
+    # Update nominee vote count ONLY now that it's verified
     nominee = AwardsNominee.query.get(vote.nominee_id)
     old_vote_count = nominee.votes
     nominee.votes += vote.votes_count
@@ -1350,7 +1359,6 @@ def verify_payment(reference):
     
     flash(f'Thank you! Your {vote.votes_count} vote(s) for {nominee.name} has been recorded.', 'success')
     return redirect(url_for('awards.category_nominees', category_id=nominee.category_id))
-
 # Admin routes for Awards management
 @editor.route('/awards/manage')
 @login_required

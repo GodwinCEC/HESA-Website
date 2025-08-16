@@ -225,6 +225,22 @@ class AwardsNominee(db.Model):
     # Relationships
     votes_received = db.relationship('AwardsVote', backref='nominee_ref', lazy=True, cascade="all, delete-orphan")
     
+    @property
+    def verified_vote_count(self):
+        """Get the actual count of verified votes for this nominee"""
+        return db.session.query(db.func.sum(AwardsVote.votes_count)).filter(
+            AwardsVote.nominee_id == self.id,
+            AwardsVote.verified == True
+        ).scalar() or 0
+    
+    @property
+    def total_vote_amount(self):
+        """Get the total amount from verified votes for this nominee"""
+        return db.session.query(db.func.sum(AwardsVote.amount)).filter(
+            AwardsVote.nominee_id == self.id,
+            AwardsVote.verified == True
+        ).scalar() or 0.0
+    
     def __repr__(self):
         return f"AwardsNominee('{self.name}', category='{self.category_ref.name}')"
 
@@ -238,3 +254,6 @@ class AwardsVote(db.Model):
     verified = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+
+# flask db migrate -m "models.py changes"
+# flask db upgrade
