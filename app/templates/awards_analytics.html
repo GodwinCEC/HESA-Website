@@ -306,8 +306,11 @@
         </div>
         <div class="summary-card">
             <div class="summary-number">
-                {% set total_nominees = analytics_data|sum(attribute='nominees')|length %}
-                {{ analytics_data|map(attribute='nominees')|map('length')|sum }}
+                {% set total_nominees = 0 %}
+                {% for category_data in analytics_data %}
+                    {% set total_nominees = total_nominees + category_data.nominees|length %}
+                {% endfor %}
+                {{ total_nominees }}
             </div>
             <div class="summary-label">Active Nominees</div>
         </div>
