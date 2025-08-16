@@ -174,14 +174,35 @@
 document.addEventListener('DOMContentLoaded', function() {
     const paystackButton = document.getElementById('paystackButton');
     
+    // Debug information
+    console.log('=== PAYSTACK DEBUG INFO ===');
+    console.log('Vote email from backend:', "{{ vote.email }}");
+    console.log('Vote email length:', "{{ vote.email|length }}");
+    console.log('Amount in kobo:', {{ amount_kobo }});
+    console.log('Reference:', "{{ reference }}");
+    console.log('Nominee:', "{{ nominee.name }}");
+    console.log('Vote count:', {{ vote.votes_count }});
+    console.log('Amount in GHS:', {{ vote.amount }});
+    
     if (paystackButton) {
         paystackButton.addEventListener('click', function() {
-            const paymentEmail = "{{ vote.email }}" || "voter@example.com";
+            const voteEmail = "{{ vote.email }}";
+            const paymentEmail = voteEmail || "gymncec@gmail.com";
+            
+            console.log('Vote email from template:', voteEmail);
+            console.log('Payment email to use:', paymentEmail);
+            console.log('Email is empty string:', voteEmail === "");
+            
             paymentHandler(paymentEmail);
         });
     }
     
     function paymentHandler(email) {
+        console.log('=== PAYSTACK HANDLER ===');
+        console.log('Email being sent to Paystack:', email);
+        console.log('Amount (kobo):', {{ amount_kobo }});
+        console.log('Reference:', "{{ reference }}");
+        
         const handler = PaystackPop.setup({
             key: 'pk_live_11e274d83b872eaa459e4ebdbcb941e11d392137', // Replace with your Paystack public key
             email: email,
@@ -189,6 +210,7 @@ document.addEventListener('DOMContentLoaded', function() {
             currency: 'GHS',
             ref: '{{ reference }}',
             callback: function(response) {
+                console.log('Paystack callback response:', response);
                 window.location.href = "{{ url_for('awards.verify_payment', reference=reference) }}";
             },
             onClose: function() {

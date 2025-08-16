@@ -1224,6 +1224,7 @@ def category_nominees(category_id):
                           voting_active=voting_active, 
                           vote_cost=vote_cost,
                           show_vote_counts=show_vote_counts)
+# Add these debug print statements to your awards routes
 
 @awards.route('/vote/<int:nominee_id>', methods=['POST'])
 def process_vote(nominee_id):
@@ -1233,15 +1234,28 @@ def process_vote(nominee_id):
     
     nominee = AwardsNominee.query.get_or_404(nominee_id)
     
+    # Debug prints
+    print("=== VOTE PROCESSING DEBUG ===")
+    print(f"Nominee ID: {nominee_id}")
+    print(f"Nominee Name: {nominee.name}")
+    print(f"Request Form Data: {dict(request.form)}")
+    
     # Get votes from form data
     votes = int(request.form.get('votes', 1))
     email = request.form.get('email', '')
     
+    print(f"Votes: {votes}")
+    print(f"Email: '{email}'")
+    print(f"Email length: {len(email)}")
+    print(f"Email is empty: {email == ''}")
+    
     # Calculate amount
     amount = votes * AwardsVotingSettings.vote_cost
+    print(f"Amount: {amount}")
     
     # Generate a unique reference
     reference = f"awards-{nominee_id}-{secrets.token_hex(6)}"
+    print(f"Reference: {reference}")
     
     # Store pending vote
     vote = AwardsVote(
@@ -1252,8 +1266,25 @@ def process_vote(nominee_id):
         transaction_ref=reference,
         verified=False
     )
+    
+    print(f"Vote object before saving:")
+    print(f"  - nominee_id: {vote.nominee_id}")
+    print(f"  - email: '{vote.email}'")
+    print(f"  - votes_count: {vote.votes_count}")
+    print(f"  - amount: {vote.amount}")
+    print(f"  - transaction_ref: {vote.transaction_ref}")
+    print(f"  - verified: {vote.verified}")
+    
     db.session.add(vote)
     db.session.commit()
+    
+    # Verify it was saved
+    saved_vote = AwardsVote.query.filter_by(transaction_ref=reference).first()
+    print(f"Saved vote from database:")
+    print(f"  - ID: {saved_vote.id}")
+    print(f"  - email: '{saved_vote.email}'")
+    print(f"  - votes_count: {saved_vote.votes_count}")
+    print("=== END DEBUG ===")
     
     # Redirect to payment gateway
     return redirect(url_for('awards.initiate_payment', reference=reference))
@@ -1263,8 +1294,24 @@ def initiate_payment(reference):
     vote = AwardsVote.query.filter_by(transaction_ref=reference).first_or_404()
     nominee = AwardsNominee.query.get_or_404(vote.nominee_id)
     
+    # Debug prints
+    print("=== PAYMENT INITIATION DEBUG ===")
+    print(f"Reference: {reference}")
+    print(f"Vote ID: {vote.id}")
+    print(f"Vote email: '{vote.email}'")
+    print(f"Vote email type: {type(vote.email)}")
+    print(f"Vote email is None: {vote.email is None}")
+    print(f"Vote amount: {vote.amount}")
+    print(f"Nominee: {nominee.name}")
+    
     # Calculate amount in kobo (multiply by 100) for Paystack
     amount_kobo = int(vote.amount * 100)
+    print(f"Amount in kobo: {amount_kobo}")
+    
+    # Check what email will be used in template
+    payment_email = vote.email if vote.email else "voter@example.com"
+    print(f"Payment email to use: '{payment_email}'")
+    print("=== END PAYMENT DEBUG ===")
     
     return render_template('awards_payment.html', 
                           vote=vote, 
@@ -1276,14 +1323,30 @@ def initiate_payment(reference):
 def verify_payment(reference):
     vote = AwardsVote.query.filter_by(transaction_ref=reference).first_or_404()
     
+    # Debug prints
+    print("=== PAYMENT VERIFICATION DEBUG ===")
+    print(f"Reference: {reference}")
+    print(f"Vote before verification:")
+    print(f"  - ID: {vote.id}")
+    print(f"  - email: '{vote.email}'")
+    print(f"  - votes_count: {vote.votes_count}")
+    print(f"  - verified: {vote.verified}")
+    
     # Mark vote as verified
     vote.verified = True
     
     # Update nominee vote count
     nominee = AwardsNominee.query.get(vote.nominee_id)
+    old_vote_count = nominee.votes
     nominee.votes += vote.votes_count
     
+    print(f"Nominee vote count: {old_vote_count} -> {nominee.votes}")
+    
     db.session.commit()
+    
+    print(f"Vote after verification:")
+    print(f"  - verified: {vote.verified}")
+    print("=== END VERIFICATION DEBUG ===")
     
     flash(f'Thank you! Your {vote.votes_count} vote(s) for {nominee.name} has been recorded.', 'success')
     return redirect(url_for('awards.category_nominees', category_id=nominee.category_id))
