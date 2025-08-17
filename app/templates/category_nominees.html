@@ -344,12 +344,12 @@
         <a href="{{ url_for('awards.index') }}" class="back-button">
             <i class="fas fa-arrow-left"></i> Back to Categories
         </a>
-        
+
         <h1 class="category-title">{{ category.name }}</h1>
         {% if category.description %}
         <p class="category-description">{{ category.description }}</p>
         {% endif %}
-        
+
         <div class="voting-info">
             {% if voting_active %}
             <div class="voting-status voting-active">
@@ -360,9 +360,10 @@
                 <i class="fas fa-times-circle"></i> Voting Closed
             </div>
             {% endif %}
-            
+
             <div class="vote-cost">
-                <i class="fas fa-coins"></i> GH₵ {{ "%.2f"|format(vote_cost) }} per vote
+                <i class="fas fa-coins"></i> GH₵ {{ "%.2f"|format(vote_cost) }}
+                per vote
             </div>
         </div>
     </div>
@@ -379,15 +380,24 @@
                 {% if nominee.description %}
                 <div class="nominee-description">{{ nominee.description }}</div>
                 {% endif %}
-                
+
                 {% if show_vote_counts %}
                 <div class="nominee-votes">
-                    <i class="fas fa-vote-yea"></i> {{ nominee.votes }} votes
+                    <i class="fas fa-chart-pie"></i>
+                    {% set total_category_votes =
+                    nominees|sum(attribute='votes') %}
+                    {% if total_category_votes > 0 %}
+                    {{ ((nominee.votes / total_category_votes) * 100)|round(1)
+                    }}%
+                    {% else %}
+                    0%
+                    {% endif %}
                 </div>
                 {% endif %}
-                
+
                 {% if voting_active %}
-                <button class="vote-button" onclick="openVoteModal({{ nominee.id }}, '{{ nominee.name }}')">
+                <button class="vote-button"
+                    onclick="openVoteModal({{ nominee.id }}, '{{ nominee.name }}')">
                     <i class="fas fa-vote-yea"></i> Vote Now
                 </button>
                 {% else %}
@@ -402,7 +412,8 @@
         <div class="empty-state">
             <i class="fas fa-users"></i>
             <h3>No Nominees Yet</h3>
-            <p>Nominees for this category will be announced soon. Check back later!</p>
+            <p>Nominees for this category will be announced soon. Check back
+                later!</p>
         </div>
         {% endif %}
     </div>
@@ -413,23 +424,25 @@
     <div class="vote-modal-content">
         <span class="close-modal" onclick="closeVoteModal()">&times;</span>
         <div class="modal-nominee-name" id="modalNomineeName"></div>
-        
+
         <form class="vote-form" id="voteForm" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
                 <label for="votes">Number of Votes:</label>
-                <input type="number" id="votes" name="votes" min="1" value="1" required onchange="updateCost()">
+                <input type="number" id="votes" name="votes" min="1" value="1"
+                    required onchange="updateCost()">
             </div>
-            
+
             <div class="vote-cost-display" id="costDisplay">
                 Total Cost: GH₵ {{ "%.2f"|format(vote_cost) }}
             </div>
-            
+
             <div class="form-group">
                 <label for="email">Email (Optional):</label>
-                <input type="email" id="email" name="email" placeholder="your.email@example.com">
+                <input type="email" id="email" name="email"
+                    placeholder="your.email@example.com">
             </div>
-            
+
             <button type="submit" class="submit-vote-btn">
                 <i class="fas fa-credit-card"></i> Proceed to Payment
             </button>

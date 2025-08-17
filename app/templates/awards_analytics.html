@@ -267,11 +267,11 @@
         <h1 class="analytics-title">🏆 Awards Analytics Dashboard</h1>
         <p class="analytics-subtitle">Real-time voting analytics and performance tracking</p>
         <div class="data-indicator {% if show_real_data %}real-data{% else %}masked-data{% endif %}">
-            {% if show_real_data %}
+            <!-- {% if show_real_data %}
             <i class="fas fa-eye"></i> Real Data View
             {% else %}
             <i class="fas fa-user-secret"></i> Masked Data View
-            {% endif %}
+            {% endif %} -->
         </div>
     </div>
     
@@ -296,10 +296,10 @@
             <div class="summary-number">{{ analytics_data|length }}</div>
             <div class="summary-label">Categories</div>
         </div>
-        <div class="summary-card">
+        <!-- <div class="summary-card">
             <div class="summary-number">{{ total_votes }}</div>
             <div class="summary-label">Total Votes</div>
-        </div>
+        </div> -->
         <div class="summary-card">
             <div class="summary-number">GH₵ {{ "%.2f"|format(total_amount) }}</div>
             <div class="summary-label">Total Revenue</div>
@@ -330,7 +330,7 @@
             </div>
             
             <div class="category-stats">
-                <div><strong>Total Votes:</strong> {{ category_data.total_votes }}</div>
+                <!-- <div><strong>Total Votes:</strong> {{ category_data.total_votes }}</div> -->
                 <div><strong>Total Amount:</strong> GH₵ {{ "%.2f"|format(category_data.total_amount) }}</div>
                 <div><strong>Nominees:</strong> {{ category_data.nominees|length }}</div>
             </div>
@@ -342,7 +342,7 @@
                     <div class="nominee-name">
                         {{ nominee_data.nominee.name }}
                         {% if loop.index == 1 and nominee_data.votes > 0 %}
-                        <small style="color: #f39c12; font-weight: normal;">(Leading)</small>
+                        <!-- <small style="color: #f39c12; font-weight: normal;">(Leading)</small> -->
                         {% endif %}
                     </div>
                     
@@ -353,20 +353,20 @@
                     {% endif %}
                     
                     <div class="nominee-stats">
-                        <div class="stat-item">
+                        <!-- <div class="stat-item">
                             <span class="stat-value">GH₵ {{ "%.2f"|format(nominee_data.amount) }}</span>
                             <span class="stat-label">Revenue</span>
-                        </div>
+                        </div> -->
                         <div class="stat-item">
                             <span class="stat-value">{{ nominee_data.percentage }}%</span>
-                            <span class="stat-label">Share</span>
+                            <!-- <span class="stat-label">Share</span> -->
                         </div>
                     </div>
                     
                     <div class="percentage-bar">
                         <div class="percentage-fill" style="width: {{ nominee_data.percentage }}%;"></div>
                     </div>
-                    <div class="percentage-text">{{ nominee_data.percentage }}% of category votes</div>
+                    <div class="percentage-text">{{ nominee_data.percentage }}%</div>
                 </div>
                 {% endfor %}
             </div>
