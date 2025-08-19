@@ -9,34 +9,29 @@
 
 {% block content %}
 <!-- Hero Section -->
-<section class="hero">
-    <div class="hero-image-container">
-        <img src="{{ url_for('static', filename='img/foh-banner.jpg') }}" alt="Face of HESA Banner" class="hero-image">
-        <div class="hero-overlay"></div>
-    </div>
-    <div class="hero-content">
-        <h1 class="hero-title">Face of HESA</h1>
-        <p class="hero-subtitle">Vote for your favorite contestant!</p>
-        <div class="hero-details">
-            <div class="hero-detail">
-                <i class="fas fa-star"></i>
-                <span>Celebrating Beauty & Intelligence</span>
+<section class="simple-header">
+    <div class="container text-center py-5">
+        <div class="header-content">
+            <h1 class="display-3 fw-bold text-gradient mb-3">THE IDEAL CEO</h1>
+            <p class="lead mb-4 text-muted">HESA Business Pitching Showdown</p>
+            <div class="d-flex justify-content-center gap-3 flex-wrap mb-3">
+                <div class="info-pill">
+                    <i class="fas fa-coins me-2"></i>
+                    <span>GH₵ {{ vote_cost }} per vote</span>
+                </div>
+                {% if voting_active %}
+                <div class="info-pill status-active">
+                    <i class="fas fa-vote-yea me-2"></i>
+                    <span>Voting is OPEN</span>
+                </div>
+                {% else %}
+                <div class="info-pill status-inactive">
+                    <i class="fas fa-ban me-2"></i>
+                    <span>Voting is CLOSED</span>
+                </div>
+                {% endif %}
             </div>
-            <div class="hero-detail">
-                <i class="fas fa-coins"></i>
-                <span>GH₵ {{ vote_cost }} per vote</span>
-            </div>
-            {% if voting_active %}
-            <div class="hero-detail active">
-                <i class="fas fa-vote-yea"></i>
-                <span>Voting is OPEN</span>
-            </div>
-            {% else %}
-            <div class="hero-detail inactive">
-                <i class="fas fa-ban"></i>
-                <span>Voting is CLOSED</span>
-            </div>
-            {% endif %}
+            <div class="header-accent"></div>
         </div>
     </div>
 </section>
@@ -46,38 +41,50 @@
     <div class="container">
         <div class="section-heading">
             <h2>Meet Our Contestants</h2>
-            <p>Vote for your favorite contestant to crown them as the next Face of HESA!</p>
+            <!-- <p>Vote for your favorite contestant to crown them as the next Face of HESA!</p> -->
         </div>
-        
+
         {% if voting_active %}
         <div class="voting-instructions">
             <h3><i class="fas fa-info-circle"></i> How to Vote</h3>
             <ol>
-                <li>Click on the "Vote Now" button below your favorite contestant</li>
+                <li>Click on the "Vote Now" button below your favorite
+                    contestant</li>
                 <li>Enter the number of votes you wish to cast</li>
-                <li>Complete the payment process (GH₵ {{ vote_cost }} per vote)</li>
+                <li>Complete the payment process (GH₵ {{ vote_cost }} per
+                    vote)</li>
                 <li>Your votes will be counted once payment is confirmed</li>
             </ol>
         </div>
         {% endif %}
-        
+
         <div class="contestants-grid">
             {% for contestant in contestants %}
             <div class="contestant-card">
                 <div class="contestant-image-container">
                     <div class="contestant-number">{{ loop.index }}</div>
-                    {{ render_image(contestant.image_file, 'foh_pics/', 'foh_pics/default_contestant.jpg', contestant.name, 'contestant-image') }}
+                    {{ render_image(contestant.image_file, 'foh_pics/',
+                    'foh_pics/default_contestant.jpg', contestant.name,
+                    'contestant-image') }}
                 </div>
                 <div class="contestant-details">
                     <h3 class="contestant-name">{{ contestant.name }}</h3>
-                    <p class="contestant-description">{{ contestant.description }}</p>
-                    <div class="votes-counter">
+                    <div class="contestant-description-wrapper">
+                        <p class="contestant-description truncated">{{
+                            contestant.description }}</p>
+                        <button class="read-more-btn" type="button">Read
+                            more</button>
+                    </div>
+                    <div class="votes-counter" hidden>
                         <!-- <span class="votes-count">{{ contestant.votes }}</span> -->
                         <span class="votes-count">🤫</span>
                         <span class="votes-label">Votes</span>
                     </div>
                     {% if voting_active %}
-                    <button class="vote-btn" data-bs-toggle="modal" data-bs-target="#voteModal" data-contestant-id="{{ contestant.id }}" data-contestant-name="{{ contestant.name }}">
+                    <button class="vote-btn" data-bs-toggle="modal"
+                        data-bs-target="#voteModal"
+                        data-contestant-id="{{ contestant.id }}"
+                        data-contestant-name="{{ contestant.name }}">
                         <i class="fas fa-vote-yea"></i> Vote Now
                     </button>
                     {% else %}
@@ -102,32 +109,43 @@
 
 <!-- Vote Modal -->
 {% if voting_active %}
-<div class="modal fade" id="voteModal" tabindex="-1" aria-labelledby="voteModalLabel" aria-hidden="true">
+<div class="modal fade" id="voteModal" tabindex="-1"
+    aria-labelledby="voteModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="voteModalLabel">Vote for <span id="contestantName"></span></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="voteModalLabel">Vote for <span
+                        id="contestantName"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="voteForm" method="POST">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    
+                    <input type="hidden" name="csrf_token"
+                        value="{{ csrf_token() }}">
+
                     <div class="mb-3">
-                        <label for="votes" class="form-label">Number of Votes</label>
-                        <input type="number" class="form-control" id="votes" name="votes" min="1" value="1" required>
-                        <div class="form-text">Cost: GH₵ <span id="costDisplay">{{ vote_cost }}</span></div>
+                        <label for="votes" class="form-label">Number of
+                            Votes</label>
+                        <input type="number" class="form-control" id="votes"
+                            name="votes" min="1" value="1" required>
+                        <div class="form-text">Cost: GH₵ <span
+                                id="costDisplay">{{ vote_cost }}</span></div>
                     </div>
-                    
+
                     <div class="mb-3">
-                        <label for="email" class="form-label">Email Address (Optional)</label>
-                        <input type="email" class="form-control" id="email" name="email" placeholder="your@email.com">
-                        <div class="form-text">We'll never share your email with anyone else.</div>
+                        <label for="email" class="form-label">Email
+                            Address</label>
+                        <input type="email" class="form-control" id="email"
+                            name="email" placeholder="your@email.com" required>
+                        <div class="form-text">We'll never share your email with
+                            anyone else.</div>
                     </div>
-                    
+
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-credit-card"></i> Proceed to Payment
+                            <i class="fas fa-credit-card"></i> Proceed to
+                            Payment
                         </button>
                     </div>
                 </form>
@@ -138,11 +156,11 @@
 {% endif %}
 
 {% endblock %}
-
 {% block scripts %}
 {% if voting_active %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Your existing voting modal code stays the same...
     const voteModal = document.getElementById('voteModal');
     const voteForm = document.getElementById('voteForm');
     const contestantNameSpan = document.getElementById('contestantName');
@@ -159,7 +177,6 @@ document.addEventListener('DOMContentLoaded', function() {
             contestantNameSpan.textContent = contestantName;
             voteForm.action = "{{ url_for('foh.process_vote', contestant_id=0) }}".replace('0', contestantId);
             
-            // Reset form values
             votesInput.value = 1;
             costDisplay.textContent = voteCost.toFixed(2);
         });
@@ -172,7 +189,63 @@ document.addEventListener('DOMContentLoaded', function() {
             costDisplay.textContent = totalCost.toFixed(2);
         });
     }
+    
+    // Simple description toggle
+    setupDescriptionToggles();
 });
+
+function setupDescriptionToggles() {
+    const readMoreBtns = document.querySelectorAll('.read-more-btn');
+    
+    readMoreBtns.forEach(btn => {
+        const description = btn.previousElementSibling;
+        
+        // Check if text is actually truncated
+        if (description.scrollHeight <= description.clientHeight) {
+            btn.style.display = 'none'; // Hide button if text fits
+            return;
+        }
+        
+        btn.addEventListener('click', function() {
+            if (description.classList.contains('truncated')) {
+                description.classList.remove('truncated');
+                btn.textContent = 'Read less';
+            } else {
+                description.classList.add('truncated');
+                btn.textContent = 'Read more';
+            }
+        });
+    });
+}
+</script>
+{% else %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    setupDescriptionToggles();
+});
+
+function setupDescriptionToggles() {
+    const readMoreBtns = document.querySelectorAll('.read-more-btn');
+    
+    readMoreBtns.forEach(btn => {
+        const description = btn.previousElementSibling;
+        
+        if (description.scrollHeight <= description.clientHeight) {
+            btn.style.display = 'none';
+            return;
+        }
+        
+        btn.addEventListener('click', function() {
+            if (description.classList.contains('truncated')) {
+                description.classList.remove('truncated');
+                btn.textContent = 'Read less';
+            } else {
+                description.classList.add('truncated');
+                btn.textContent = 'Read more';
+            }
+        });
+    });
+}
 </script>
 {% endif %}
 {% endblock %}
