@@ -80,18 +80,23 @@
                         <span class="votes-count">🤫</span>
                         <span class="votes-label">Votes</span>
                     </div>
-                    {% if voting_active %}
+                    <a
+                        href="{{ url_for('foh.contestant_detail', contestant_id=contestant.id) }}"
+                        class="vote-btn">
+                        <i class="fas fa-eye"></i> View Details
+                    </a>
+                    <!-- {% if voting_active %}
                     <button class="vote-btn" data-bs-toggle="modal"
                         data-bs-target="#voteModal"
                         data-contestant-id="{{ contestant.id }}"
                         data-contestant-name="{{ contestant.name }}">
                         <i class="fas fa-vote-yea"></i> Vote Now
                     </button>
-                    {% else %}
-                    <button class="vote-btn disabled" disabled>
+                    {% else %} -->
+                    <!-- <button class="vote-btn disabled" disabled>
                         <i class="fas fa-ban"></i> Voting Closed
                     </button>
-                    {% endif %}
+                    {% endif %} -->
                 </div>
             </div>
             {% else %}

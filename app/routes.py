@@ -1057,6 +1057,18 @@ def verify_payment(reference):
     flash(f'Thank you! Your {vote.votes_count} vote(s) for {contestant.name} has been recorded.', 'success')
     return redirect(url_for('foh.index'))
 
+
+@foh.route('/contestant/<int:contestant_id>')
+def contestant_detail(contestant_id):
+    contestant = FohContestant.query.filter_by(id=contestant_id, is_active=True).first_or_404()
+    voting_active = VotingSettings.is_voting_active
+    vote_cost = VotingSettings.vote_cost
+    return render_template('contestant_detail.html', 
+                          contestant=contestant, 
+                          voting_active=voting_active, 
+                          vote_cost=vote_cost)
+    
+    
 # Admin routes for Face of HESA management
 @editor.route('/foh/manage')
 @login_required

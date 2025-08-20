@@ -1,0 +1,189 @@
+{% extends "layout.html" %}
+{% from "macros/image_helper.html" import render_image %}
+
+{% block title %}{{ contestant.name }} - The Ideal CEO{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/foh.css') }}">
+<style>
+.contestant-detail {
+    padding: 2rem 0;
+    min-height: 80vh;
+}
+
+.contestant-hero {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 3rem 0;
+    color: white;
+    text-align: center;
+}
+
+.contestant-detail-card {
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    margin-top: -100px;
+    position: relative;
+    z-index: 1;
+}
+
+.contestant-detail-image {
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+    border-radius: 15px;
+    object-fit: cover;
+    border: 5px solid white;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+}
+
+.contestant-content {
+    padding: 2rem;
+}
+
+.vote-section {
+    background: #f8f9fa;
+    padding: 2rem;
+    border-radius: 10px;
+    margin-top: 2rem;
+}
+
+.back-link {
+    color: white;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.back-link:hover {
+    color: #f8f9fa;
+}
+
+@media (max-width: 768px) {
+    .contestant-detail-image {
+        max-width: 300px;
+    }
+    
+    .contestant-detail-card {
+        margin-top: -50px;
+    }
+}
+</style>
+{% endblock %}
+{% block content %}
+<!-- Hero Section -->
+<section class="contestant-hero">
+    <div class="container">
+        <a href="{{ url_for('foh.index') }}" class="back-link">
+            <i class="fas fa-arrow-left"></i> Back to All Contestants
+        </a>
+        <h1 class="display-4 fw-bold mb-2">{{ contestant.name }}</h1>
+        <p class="lead">The Ideal CEO Contestant</p>
+    </div>
+</section>
+
+<!-- Contestant Detail -->
+<section class="contestant-detail">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="contestant-detail-card">
+                    <div class="text-center p-4">
+                        {{ render_image(contestant.image_file, 'foh_pics/', 'foh_pics/default_contestant.jpg', contestant.name, 'contestant-detail-image') }}
+                    </div>
+                    
+                    <div class="contestant-content">
+                        <h2 class="text-center mb-4">{{ contestant.name }}</h2>
+                        
+                        <div class="description-section">
+                            <h5><i class="fas fa-user-tie me-2"></i>About {{ contestant.name.split()[0] }}</h5>
+                            <p class="lead">{{ contestant.description }}</p>
+                        </div>
+                        
+                        {% if voting_active %}
+                        <div class="vote-section text-center">
+                            <h4><i class="fas fa-vote-yea me-2"></i>Cast Your Vote</h4>
+                            <p class="mb-3">Support {{ contestant.name.split()[0] }} in becoming the next Ideal CEO!</p>
+                            
+                            <div class="voting-info mb-3">
+                                <span class="badge bg-primary fs-6">GH₵ {{ vote_cost }} per vote</span>
+                            </div>
+                            
+                            <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#voteModal">
+                                <i class="fas fa-vote-yea me-2"></i>Vote for {{ contestant.name.split()[0] }}
+                            </button>
+                        </div>
+                        {% else %}
+                        <div class="vote-section text-center">
+                            <h4><i class="fas fa-ban me-2"></i>Voting Closed</h4>
+                            <p class="text-muted">Voting for this contest has ended.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Vote Modal -->
+{% if voting_active %}
+<div class="modal fade" id="voteModal" tabindex="-1" aria-labelledby="voteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="voteModalLabel">Vote for {{ contestant.name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ url_for('foh.process_vote', contestant_id=contestant.id) }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="mb-3">
+                        <label for="votes" class="form-label">Number of Votes</label>
+                        <input type="number" class="form-control" id="votes" name="votes" min="1" value="1" required>
+                        <div class="form-text">Cost: GH₵ <span id="costDisplay">{{ vote_cost }}</span></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="email" name="email" placeholder="your@email.com" required>
+                        <div class="form-text">We'll never share your email with anyone else.</div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-credit-card"></i> Proceed to Payment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+{% if voting_active %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const votesInput = document.getElementById('votes');
+    const costDisplay = document.getElementById('costDisplay');
+    const voteCost = {{ vote_cost }};
+    
+    if (votesInput && costDisplay) {
+        votesInput.addEventListener('input', function() {
+            const votes = parseInt(this.value) || 0;
+            const totalCost = votes * voteCost;
+            costDisplay.textContent = totalCost.toFixed(2);
+        });
+    }
+});
+</script>
+{% endif %}
+{% endblock %}
