@@ -351,11 +351,11 @@
         {% endif %}
 
         <div class="voting-info">
-            {% if voting_active %}
+            <!-- {% if voting_active %}
             <div class="voting-status voting-active">
                 <i class="fas fa-check-circle"></i> Voting Open
             </div>
-            {% else %}
+            {% else %} -->
             <div class="voting-status voting-inactive">
                 <i class="fas fa-times-circle"></i> Voting Closed
             </div>
@@ -381,7 +381,7 @@
                 <div class="nominee-description">{{ nominee.description }}</div>
                 {% endif %}
 
-                {% if show_vote_counts %}
+                <!-- {% if show_vote_counts %}
                 <div class="nominee-votes">
                     <i class="fas fa-chart-pie"></i>
                     {% set total_category_votes =
@@ -392,6 +392,11 @@
                     {% else %}
                     0%
                     {% endif %}
+                </div>
+                {% endif %} -->
+                {% if show_vote_counts %}
+                <div class="nominee-votes">
+                    <i class="fas fa-vote-yea"></i> {{ nominee.votes }}
                 </div>
                 {% endif %}
 
