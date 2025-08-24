@@ -81,7 +81,7 @@
             <i class="fas fa-arrow-left"></i> Back to All Contestants
         </a>
         <h1 class="display-4 fw-bold mb-2">{{ contestant.name }}</h1>
-        <p class="lead">The Ideal CEO Contestant</p>
+        <!-- <p class="lead">The Ideal CEO Contestant</p> -->
     </div>
 </section>
 
@@ -99,21 +99,23 @@
                         <h2 class="text-center mb-4">{{ contestant.name }}</h2>
                         
                         <div class="description-section">
-                            <h5><i class="fas fa-user-tie me-2"></i>About {{ contestant.name.split()[0] }}</h5>
+                            <h5><i class="fas fa-user-tie me-2"></i>About </h5>
                             <p class="lead">{{ contestant.description }}</p>
                         </div>
                         
                         {% if voting_active %}
                         <div class="vote-section text-center">
                             <h4><i class="fas fa-vote-yea me-2"></i>Cast Your Vote</h4>
-                            <p class="mb-3">Support {{ contestant.name.split()[0] }} in becoming the next Ideal CEO!</p>
+                            <!-- <p class="mb-3">Support {{ contestant.name.split()[0] }} in becoming the next Ideal CEO!</p> -->
+                            <p class="mb-3"> {{ contestant.votes] }} votes</p>
                             
-                            <div class="voting-info mb-3">
+                            <!-- <div class="voting-info mb-3">
                                 <span class="badge bg-primary fs-6">GH₵ {{ vote_cost }} per vote</span>
-                            </div>
+                                <span class="badge bg-primary fs-6">{{ contestant.votes }} votes</span>
+                            </div> -->
                             
                             <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#voteModal">
-                                <i class="fas fa-vote-yea me-2"></i>Vote for {{ contestant.name.split()[0] }}
+                                <i class="fas fa-vote-yea me-2"></i>Vote
                             </button>
                         </div>
                         {% else %}
