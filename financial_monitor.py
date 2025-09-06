@@ -234,8 +234,18 @@ class EnhancedFinancialMonitor:
             #     crown = "👑 " if nominee['is_winner'] else "   "
             #     print(f"{crown}{i}. {nominee['name']} ({nominee['category']}): GH₵ {nominee['revenue']:.2f} (Net: GH₵ {nominee['net_revenue']:.2f}) ({percentage:.1f}%)")
         
+        # self.awards_data = {
+        #     'total_revenue': awards_total_revenue-env,
+        #     'total_net_revenue': awards_total_net_revenue,
+        #     'total_votes': awards_total_votes-env,
+        #     'total_transactions': awards_total_transactions,
+        #     'nominees': nominee_data,
+        #     'category_revenue': dict(category_revenue),
+        #     'category_nominees': dict(category_nominees)
+        # }
+        
         self.awards_data = {
-            'total_revenue': awards_total_revenue-env,
+            'total_revenue': awards_total_revenue,
             'total_net_revenue': awards_total_net_revenue,
             'total_votes': awards_total_votes-env,
             'total_transactions': awards_total_transactions,
