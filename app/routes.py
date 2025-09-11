@@ -2,10 +2,11 @@ from flask import Blueprint, render_template, url_for, flash, redirect, request,
 from flask_login import login_user, current_user, logout_user, login_required
 from app import db
 from app.models import (User, BlogPost, Comment, PersonalityOfTheWeek, 
-                        PotwComment, Event, BusLocation, HomeBanner, GalleryPhoto, GalleryCategory, FohContestant, FohVote)
+                        PotwComment, Event, BusLocation, HomeBanner, GalleryPhoto, GalleryCategory, 
+                        FohContestant, FohVote, Suggestion)
 from app.forms import (AssignBusForm, RegistrationForm, LoginForm, BlogPostForm, CommentForm, 
                       PotwForm, PotwCommentForm, EventForm, BusLocationForm, HomeBannerForm, GalleryCategoryForm, 
-                      GalleryPhotoForm, FohContestantForm, VoteForm)
+                      GalleryPhotoForm, FohContestantForm, VoteForm, SuggestionForm)
 from app.models import AwardsCategory, AwardsNominee, AwardsVote
 from app.forms import AwardsCategoryForm, AwardsNomineeForm, AwardsVoteForm
 import os
@@ -968,10 +969,49 @@ def like_photo(photo_id):
     return jsonify({'success': True, 'likes': photo.likes})
 
 
+@main.route('/suggestions', methods=['GET', 'POST'])
+def suggestions():
+    form = SuggestionForm()
+    if form.validate_on_submit():
+        suggestion = Suggestion(
+            name=form.name.data if form.name.data else None,
+            email=form.email.data if form.email.data else None,
+            content=form.content.data
+        )
+        db.session.add(suggestion)
+        db.session.commit()
+        flash('Thank you for your suggestion! We appreciate your feedback.', 'success')
+        return redirect(url_for('main.suggestions'))
+    return render_template('suggestions.html', form=form)
+
+# Add to editor blueprint section
+
+@editor.route('/suggestions/manage')
+@login_required
+def manage_suggestions():
+    if current_user.role not in ['admin', 'editor']:
+        abort(403)
+    
+    suggestions = Suggestion.query.order_by(Suggestion.date_posted.desc()).all()
+    return render_template('manage_suggestions.html', suggestions=suggestions)
+
+@editor.route('/suggestions/mark_read/<int:suggestion_id>', methods=['POST'])
+@login_required
+def mark_suggestion_read(suggestion_id):
+    if current_user.role not in ['admin', 'editor']:
+        abort(403)
+    
+    suggestion = Suggestion.query.get_or_404(suggestion_id)
+    suggestion.is_read = not suggestion.is_read
+    db.session.commit()
+    
+    status = "read" if suggestion.is_read else "unread"
+    flash(f'Suggestion marked as {status}!', 'success')
+    return redirect(url_for('editor.manage_suggestions'))
+
 # Create a new blueprint for Face of HESA
 foh = Blueprint('foh', __name__, url_prefix='/face-of-hesa')
 hesa_dinner = Blueprint('hesa_dinner', __name__, url_prefix='/hesa-dinner')
-
 @hesa_dinner.route('/')
 def index():
     return render_template('hesa_dinner.html')

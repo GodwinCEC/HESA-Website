@@ -1,0 +1,214 @@
+{% extends "layout.html" %}
+
+{% block title %}Suggestions - HESA{% endblock %}
+
+{% block styles %}
+<style>
+    .suggestions-container {
+        max-width: 800px;
+        margin: 40px auto;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .suggestions-header {
+        background: #4a6fa5;
+        color: white;
+        padding: 30px;
+        text-align: center;
+    }
+    
+    .suggestions-header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+    }
+    
+    .suggestions-header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+    }
+    
+    .suggestions-content {
+        padding: 40px;
+    }
+    
+    .info-section {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 30px;
+        border-left: 4px solid #4a6fa5;
+    }
+    
+    .info-section h2 {
+        color: #4a6fa5;
+        margin-bottom: 15px;
+        font-size: 1.3rem;
+    }
+    
+    .info-section ul {
+        margin-left: 20px;
+        color: #555;
+    }
+    
+    .info-section li {
+        margin-bottom: 8px;
+    }
+    
+    .form-section {
+        background: #fff;
+        border-radius: 10px;
+        padding: 25px;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .form-group {
+        margin-bottom: 25px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #333;
+    }
+    
+    .form-group input,
+    .form-group textarea {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    
+    .form-group input:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #4a6fa5;
+        box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.1);
+    }
+    
+    .form-group textarea {
+        min-height: 150px;
+        resize: vertical;
+    }
+    
+    .submit-btn {
+        background: #4a6fa5;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 15px 30px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.3s, transform 0.2s;
+        width: 100%;
+    }
+    
+    .submit-btn:hover {
+        background: #3a5a80;
+        transform: translateY(-2px);
+    }
+    
+    .required {
+        color: #dc3545;
+    }
+    
+    @media (max-width: 768px) {
+        .suggestions-container {
+            margin: 20px;
+            border-radius: 10px;
+        }
+        
+        .suggestions-header {
+            padding: 25px 20px;
+        }
+        
+        .suggestions-header h1 {
+            font-size: 2rem;
+        }
+        
+        .suggestions-content {
+            padding: 25px 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="suggestions-container">
+    <div class="suggestions-header">
+        <h1><i class="fas fa-lightbulb"></i> Share Your Suggestions</h1>
+        <p>Help us improve your HESA experience</p>
+    </div>
+    
+    <div class="suggestions-content">
+        <!-- Information Section -->
+        <div class="info-section">
+            <h2><i class="fas fa-info-circle"></i> We Value Your Feedback</h2>
+            <p>Your suggestions help us improve HESA and better serve the College of Health Sciences community. We welcome feedback on:</p>
+            <ul>
+                <li>HESA events and programs</li>
+                <li>Student services and support</li>
+                <li>Academic advocacy and representation</li>
+                <li>Campus facilities and resources</li>
+                <li>Social activities and networking opportunities</li>
+                <li>Website functionality and digital services</li>
+                <li>Communication and information sharing</li>
+                <li>Any ideas to enhance student life and experience</li>
+            </ul>
+        </div>
+         
+        <!-- Suggestion Form -->
+        <div class="form-section">
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                
+                <div class="form-group">
+                    {{ form.name.label(class="form-label") }}
+                    {{ form.name(class="form-control", placeholder="Enter your name (optional)") }}
+                    {% if form.name.errors %}
+                        <div class="text-danger mt-1">
+                            {% for error in form.name.errors %}
+                                <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    {{ form.email.label(class="form-label") }}
+                    {{ form.email(class="form-control", placeholder="Enter your email (optional)") }}
+                    {% if form.email.errors %}
+                        <div class="text-danger mt-1">
+                            {% for error in form.email.errors %}
+                                <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    {{ form.content.label(class="form-label") }}
+                    <span class="required">*</span>
+                    {{ form.content(class="form-control", placeholder="Enter suggestion here") }}
+                    {% if form.content.errors %}
+                        <div class="text-danger mt-1">
+                            {% for error in form.content.errors %}
+                                <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                {{ form.submit(class="submit-btn") }}
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

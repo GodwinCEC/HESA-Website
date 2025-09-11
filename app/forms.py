@@ -152,3 +152,10 @@ class AwardsVoteForm(FlaskForm):
     votes = IntegerField('Number of Votes', validators=[DataRequired(), NumberRange(min=1)])
     email = StringField('Email (Optional)', validators=[Optional(), Email()])
     submit = SubmitField('Proceed to Payment')
+    
+    
+class SuggestionForm(FlaskForm):
+    name = StringField('Your Name (optional)', validators=[Optional(), Length(max=100)])
+    email = StringField('Email (optional)', validators=[Optional(), Email()])
+    content = TextAreaField('Your Suggestion', validators=[DataRequired(), Length(min=10, max=1000)])
+    submit = SubmitField('Submit Suggestion')
