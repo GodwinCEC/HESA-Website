@@ -121,39 +121,6 @@ class GalleryPhotoForm(FlaskForm):
     is_active = BooleanField('Active', default=True)
     submit = SubmitField('Upload Photo')
     
-class FohContestantForm(FlaskForm):
-    name = StringField('Contestant Name', validators=[DataRequired(), Length(min=2, max=100)])
-    description = TextAreaField('Description', validators=[DataRequired()])
-    image = FileField('Contestant Photo', validators=[FileAllowed(['jpg', 'png', 'jpeg'])])
-    is_active = BooleanField('Active')
-    submit = SubmitField('Submit')
-
-class VoteForm(FlaskForm):
-    votes = IntegerField('Number of Votes', validators=[DataRequired(), NumberRange(min=1)])
-    email = StringField('Email (Optional)', validators=[Optional(), Email()])
-    submit = SubmitField('Proceed to Payment')
-    
-# Add these new forms to your forms.py file
-
-class AwardsCategoryForm(FlaskForm):
-    name = StringField('Category Name', validators=[DataRequired(), Length(min=2, max=100)])
-    description = TextAreaField('Description', validators=[Optional()])
-    is_active = BooleanField('Active', default=True)
-    submit = SubmitField('Submit')
-
-class AwardsNomineeForm(FlaskForm):
-    name = StringField('Nominee Name', validators=[DataRequired(), Length(min=2, max=100)])
-    description = TextAreaField('Description (Optional)', validators=[Optional()])
-    category = SelectField('Category', coerce=int, validators=[DataRequired()])
-    is_active = BooleanField('Active', default=True)
-    submit = SubmitField('Submit')
-
-class AwardsVoteForm(FlaskForm):
-    votes = IntegerField('Number of Votes', validators=[DataRequired(), NumberRange(min=1)])
-    email = StringField('Email (Optional)', validators=[Optional(), Email()])
-    submit = SubmitField('Proceed to Payment')
-    
-    
 class SuggestionForm(FlaskForm):
     name = StringField('Your Name (optional)', validators=[Optional(), Length(max=100)])
     email = StringField('Email (optional)', validators=[Optional(), Email()])
