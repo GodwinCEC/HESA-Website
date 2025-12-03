@@ -3,12 +3,10 @@ from flask_login import login_user, current_user, logout_user, login_required
 from app import db
 from app.models import (User, BlogPost, Comment, PersonalityOfTheWeek, 
                         PotwComment, Event, BusLocation, HomeBanner, GalleryPhoto, GalleryCategory, 
-                        FohContestant, FohVote, Suggestion)
+                        Suggestion)
 from app.forms import (AssignBusForm, RegistrationForm, LoginForm, BlogPostForm, CommentForm, 
                       PotwForm, PotwCommentForm, EventForm, BusLocationForm, HomeBannerForm, GalleryCategoryForm, 
-                      GalleryPhotoForm, FohContestantForm, VoteForm, SuggestionForm)
-from app.models import AwardsCategory, AwardsNominee, AwardsVote
-from app.forms import AwardsCategoryForm, AwardsNomineeForm, AwardsVoteForm
+                      GalleryPhotoForm, SuggestionForm)
 import os
 import secrets
 from PIL import Image
@@ -22,12 +20,6 @@ blog = Blueprint('blog', __name__, url_prefix='/blog')
 editor = Blueprint('editor', __name__, url_prefix='/editor')
 
 
-# Global awards voting settings class (add this after the VotingSettings class)
-class AwardsVotingSettings:
-    is_voting_active = True
-    vote_cost = 1.0  # Cost per vote in GHS
-    show_vote_counts = False  # Whether to show vote counts on public pages
-    
 # Helper functions
 def save_image(form_image, folder='uploads'):
     """
